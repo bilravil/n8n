@@ -14,7 +14,6 @@ jobs:
           node-version: '14.x'
           registry-url: 'https://npm.pkg.github.com'
       - run: npm install --loglevel notice
-      - run: npm install npx -g
       - run: |
           find packages -type f -print0 | xargs -0 sed -i --regexp-extended "s/from '(n8n|n8n-core|n8n-editor-ui|n8n-node-dev|n8n-nodes-base|n8n-workflow)'/from '@bilravil\/\1'/g"
           find packages -type f -print0 | xargs -0 sed -i --regexp-extended 's/from "(n8n|n8n-core|n8n-editor-ui|n8n-node-dev|n8n-nodes-base|n8n-workflow)"/from "@bilravil\/\1"/g'
