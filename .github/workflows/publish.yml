@@ -1,0 +1,38 @@
+name: NPM Packages
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          registry-url: 'https://npm.pkg.github.com'
+      - run: npm install --loglevel notice
+      - run: |
+          find packages -type f -print0 | xargs -0 sed -i --regexp-extended "s/from '(n8n|n8n-core|n8n-editor-ui|n8n-node-dev|n8n-nodes-base|n8n-workflow)'/from '@bilravil\/\1'/g"
+          find packages -type f -print0 | xargs -0 sed -i --regexp-extended 's/from "(n8n|n8n-core|n8n-editor-ui|n8n-node-dev|n8n-nodes-base|n8n-workflow)"/from "@bilravil\/\1"/g'
+          find packages -type f -print0 | xargs -0 sed -i --regexp-extended "s/require.resolve\('(n8n|n8n-core|n8n-editor-ui|n8n-node-dev|n8n-nodes-base|n8n-workflow)'\)/require.resolve('@bilravil\/\1')/g"
+          find packages -type f -print0 | xargs -0 sed -i --regexp-extended 's/require.resolve\("(n8n|n8n-core|n8n-editor-ui|n8n-node-dev|n8n-nodes-base|n8n-workflow)"\)/require.resolve("@bilravil\/\1")/g'
+          find packages -mindepth 1 -maxdepth 1 -type d | while read d; do (
+            npx rescope $d/package.json \
+              -p n8n \
+              -p n8n-core \
+              -p n8n-editor-ui \
+              -p n8n-node-dev \
+              -p n8n-nodes-base \
+              -p n8n-workflow \
+              -s ${{ github.run_number }};
+          ); done
+      - run: npx lerna bootstrap --hoist
+      - run: npm run build
+      - run: |
+          find packages -mindepth 1 -maxdepth 1 -type d | while read d; do (
+            cd $d;
+            npm publish;
+          ); done
